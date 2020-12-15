@@ -22,7 +22,7 @@ NEXT
 
 DO
     LOCATE 1
-    print "Guncam 1.01  15.12.2020"
+    PRINT "Guncam 1.02  15.12.2020"
     PRINT "Press record button": _DISPLAY
 
     d& = _DEVICEINPUT
@@ -89,7 +89,7 @@ d& = _DEVICEINPUT
 IF d& = dnro THEN
     kuk% = _BUTTON(nro)
     IF kuk% <> 0 AND painettu = 0 THEN zaika = TIMER + rlenth: painettu = 1: PLAY "T255O2L64E"
-    IF TIMER > zaika AND kuk% = 0 AND painettu = 1 THEN
+    IF TIMER > zaika AND painettu = 1 THEN
         painettu = 0
         PLAY "T255O2L64C"
         name$ = "cmd /c gifsicle.exe --delay=8 --loop --multifile *.giftemp > " + DATE$ + "-" + LTRIM$(STR$(TIMER * 100)) + ".gif"
@@ -98,6 +98,9 @@ IF d& = dnro THEN
         count = 1000
         FOR i = 1 TO _DEVICES
         NEXT
+        d& = _DEVICEINPUT
+        kuk% = _BUTTON(nro)
+
     END IF
 
 END IF

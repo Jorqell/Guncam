@@ -1,14 +1,16 @@
 DEFINT A-Y
+_SCROLLLOCK OFF
 ON ERROR GOTO failure
 DIM taulukkoa(600, 450) AS INTEGER
 DIM taulukkob(600, 450) AS INTEGER
 
 RANDOMIZE TIMER
-handle& = _NEWIMAGE(400, 300, 32)
-yiffi& = _NEWIMAGE(400, 300, 256)
+handle& = _NEWIMAGE(400, 600, 32)
+yiffi& = _NEWIMAGE(400, 600, 256)
 
 PLAY "V05"
 volume = 1
+bluramount = 2
 FOR ei = 0 TO 255
     _PALETTECOLOR ei, _RGB32(ei, ei, ei), yiffi&
 NEXT
@@ -22,8 +24,8 @@ NEXT
 
 DO
     LOCATE 1
-    PRINT "Guncam 1.03  15.12.2020"
-    PRINT "Press record button": _DISPLAY
+    PRINT "Jorqell's Guncam 1.04  17.12.2020"
+    PRINT "Choose record button": _DISPLAY
 
     d& = _DEVICEINPUT
     IF d& THEN '             the device number cannot be zero!
@@ -39,20 +41,21 @@ zoom = 0
 
 alku:
 _LIMIT 240
-IF count = 1000 THEN
-    COLOR 255
-    LOCATE 1: PRINT "STOPPED":
-    PRINT "Focus this program to change settings"
-    PRINT
-    PRINT "+ and - change brightness"
-    PRINT "/ and * change contrast"
-    PRINT "WASD moves camera"
-    PRINT "JL aspect ratio"
-    PRINT "IK zoom"
-    PRINT "V sound on/off"
-    PRINT "Scroll Lock continous recording on/off"
-    _DISPLAY
-END IF
+COLOR 255
+LOCATE 20:
+IF count = 1000 THEN PRINT "STOP                               ": ELSE PRINT "REC, frame"; count - 1000
+PRINT
+PRINT "Focus this program to change settings"
+PRINT
+PRINT "+ and - change brightness"
+PRINT "/ and * change contrast"
+PRINT "WASD moves camera"
+PRINT "JL aspect ratio"
+PRINT "IK zoom"
+PRINT "V sound on/off"
+PRINT "Scroll Lock continous recording on/off"
+REM     PRINT ",. blur"
+_DISPLAY
 
 r$ = INKEY$
 r$ = LCASE$(r$)
@@ -64,6 +67,9 @@ IF r$ = "w" THEN yoff = yoff - 2
 IF r$ = "s" THEN yoff = yoff + 2
 IF r$ = "a" THEN xoff = xoff - 2
 IF r$ = "d" THEN xoff = xoff + 2
+REM IF r$ = "," AND bluramount > 0 THEN bluramount = bluramount - 1
+REM IF r$ = "." THEN bluramount = bluramount + 1
+
 IF r$ = "i" AND zoom < 50 THEN zoom = zoom + 1
 IF r$ = "k" AND zoom > 0 THEN zoom = zoom - 1
 IF r$ = "j" THEN aspect = aspect - 1
@@ -86,7 +92,6 @@ IF _SCROLLLOCK = -1 AND count = 1000 THEN count = 1001
 
 
 
-REM     IF zaika > TIMER THEN LOCATE 1: PRINT "recording": _DISPLAY
 
 frametime = frametime + 1
 
@@ -123,26 +128,26 @@ FOR u% = 0 TO 400
         taulukkoa(u%, o%) = e%
     NEXT
 NEXT
+IF bluramount > 0 THEN
+    FOR kek = 1 TO bluramount
+        REM blur
+        FOR u% = 1 TO 399
+            FOR o% = 1 TO 299
+                REM             SHIT% = (taulukkoa(u%, o%) + taulukkoa(u% + 1, o%) + taulukkoa(u% - 1, o%) + taulukkoa(u%, o% + 1) + taulukkoa(u%, o% - 1) + taulukkoa(u% + 1, o% + 1) + taulukkoa(u% - 1, o% + 1) + taulukkoa(u% + 1, o% - 1) + taulukkoa(u% - 1, o% - 1)) / 9
+                SHIT% = (taulukkoa(u%, o%) + taulukkoa(u% + 1, o%) + taulukkoa(u% - 1, o%) + taulukkoa(u%, o% + 1) + taulukkoa(u%, o% - 1)) / 5
+                taulukkob(u%, o%) = SHIT%
+            NEXT
+        NEXT
+        FOR u% = 0 TO 400
+            FOR o% = 0 TO 300
+                taulukkoa(u%, o%) = taulukkob(u%, o%)
+                IF taulukkoa(u%, o%) < 0 THEN taulukkoa(u%, o%) = 0
+                IF taulukkoa(u%, o%) > 255 THEN taulukkoa(u%, o%) = 255
 
-FOR kek = 1 TO 2
-    REM blur
-    FOR u% = 1 TO 399
-        FOR o% = 1 TO 299
-            REM             SHIT% = (taulukkoa(u%, o%) + taulukkoa(u% + 1, o%) + taulukkoa(u% - 1, o%) + taulukkoa(u%, o% + 1) + taulukkoa(u%, o% - 1) + taulukkoa(u% + 1, o% + 1) + taulukkoa(u% - 1, o% + 1) + taulukkoa(u% + 1, o% - 1) + taulukkoa(u% - 1, o% - 1)) / 9
-            SHIT% = (taulukkoa(u%, o%) + taulukkoa(u% + 1, o%) + taulukkoa(u% - 1, o%) + taulukkoa(u%, o% + 1) + taulukkoa(u%, o% - 1)) / 5
-            taulukkob(u%, o%) = SHIT%
+            NEXT
         NEXT
     NEXT
-    FOR u% = 0 TO 400
-        FOR o% = 0 TO 300
-            taulukkoa(u%, o%) = taulukkob(u%, o%)
-            IF taulukkoa(u%, o%) < 0 THEN taulukkoa(u%, o%) = 0
-            IF taulukkoa(u%, o%) > 255 THEN taulukkoa(u%, o%) = 255
-
-        NEXT
-    NEXT
-NEXT
-
+END IF
 
 SCREEN yiffi&
 REM FOR i = 0 TO 255
@@ -190,7 +195,7 @@ RESUME alku
 
 giffer:
 PLAY "T255O2L64C"
-name$ = "cmd /c gifsicle.exe --delay=8 --loop --multifile *.giftemp > " + DATE$ + "-" + LTRIM$(STR$(TIMER * 100)) + ".gif"
+name$ = "cmd /c gifsicle.exe --delay=10 --loop --multifile *.giftemp > " + DATE$ + "-" + LTRIM$(STR$(TIMER * 100)) + ".gif"
 SHELL _HIDE name$
 SHELL _HIDE "del *.giftemp"
 count = 1000
